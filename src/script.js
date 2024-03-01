@@ -5,22 +5,55 @@
 
 
 class Character {
-    name,
-    health,
-    inventory,
-    static MAX_HEALTH = 100, = []
+    name
+    health = 100
+    inventory = []
+    consumables = {}
+    static MAX_HEALTH = 100
 
-    constructor (name) {
-        this.name = name;
-        this.health = 100;
-        this.inventory = [];
+    // one way to add defaults: give constructor default values
+    constructor (name, health, inventory) {
+      // one way to add defaults: have logic inside constructor
+        if (name) this.name = name;
+        if (health) this.health = health;
+        if (inventory) {this.inventory = inventory} else {this.inventory = ["the courage to change the world"]};
+    }
 
-    },
-    roll (mod = 0) {
-        const result = Math.floor(Math.random() * 20) + 1 + mod;
+    const roll1dX = (dX, mod=0) => { return Math.floor(Math.random() * dX) + 1 + mod }
+
+    const rolldX = (dX, mod=0) => { return roll1dX(dX, mod) }
+
+    const rollNdX = (N, dX, mod = 0) => {
+      return mod + (N<1 ? 0 : this.roll1dX(dX) + (N==1 ? 0 : this.rollNdX(N-1, dX)) )
+    }
+
+    const roll = (N = 1, dX = 20, mod = 0) => {
+        const result = rollNdX(N=N, dX=dX, mod=mod);
         console.log(`${this.name} rolled a ${result}.`)
-    },
+    }
+
+    gainItem(...item) { this.inventory.push(...item) };
+    loseItem(item) { this.inventory.delete(this.inventory.lastIndexOf(item)) };
+
+    addItem(item, count=1) {this.consumables[item] = count + (isNaN(this.consumables.item) ? 0 : this.consumables.item) }
+    subtractItem(item, count=1) {this.consumables[item] = count + (isNaN(this.consumables.item) ? 0 : this.consumables.item) }
+
+    dies () {
+      console.log('URK! :ded: 💀');
+    }
 }
+
+let theArgumentor // elucidate the behavior of construction parameters
+theArgumentor = new Character();
+console.log(`\nCharacter():\n${theArgumentor}`)
+theArgumentor = new Character("Rocky");
+console.log('\nCharacter("Rocky"):'); console.log(theArgumentor)
+theArgumentor = new Character(name="Rocky");
+console.log('\nCharacter(name="Rocky"):\n', theArgumentor)
+theArgumentor = new Character(health=99);
+console.log('\nCharacter(health=99):\n' + theArgumentor.toString())
+theArgumentor = new Character(inventory=["I got sunshine"]);
+console.log('\nCharacter(inventory=["I got sunshine"]):'); console.dir(theArgumentor)
 
 
 class Adventurer extends Character {
@@ -38,19 +71,26 @@ class Adventurer extends Character {
         'Bard, THE Bard',
         'Bard, the Chatbot',
         'Software Engineer / Paladin',
-        `AI Prompt Engineer / Illusionist`,
+        'AI Prompt Engineer / Illusionist',
         'CPA',
         'Lovable Sidekick',
         'Sassy Sidekick',
         'Useless Sidekick',
         'Talent Agent',
         'Talent Agent who does not feel bad about the state of ATS technology',  // must be Evil
+        'Hapless Patsy',
+        'a lowly stablehand',
     ]
 
     constructor (name, role) {
       super(name);
       // Adventurers have specialized roles.
-      this.role = role;
+      debugger;
+      if (Adventurer.ROLES.includes(role)) {
+          this.role = role;
+      } else {
+        this.role = 'a lowly stablehand'
+      }
       // Every adventurer starts with a bed and 50 gold coins.
       this.inventory.push("bedroll", "50 gold coins");
     }
@@ -118,10 +158,7 @@ class Companion extends Character {
   }
   
 
-
-
-
-const robin = new Adventurer("Robin");
+const robin = new Adventurer(name="Robin", role="the Chosen One");
 robin.inventory = ["sword", "potion", "artifact"];
 robin.companion = new Character("Leo");
 robin.companion.type = "Cat";
@@ -129,4 +166,8 @@ robin.companion.companion = new Character("Frank");
 robin.companion.companion.type = "Flea";
 robin.companion.companion.inventory = ["small hat", "sunglasses"];
 
-console.log(dir(Robin));
+robin.addItem("grappling hook", "the power of friendship")
+
+console.log("\n\nBehold, our heroic savior!!")
+console.log(robin);
+
