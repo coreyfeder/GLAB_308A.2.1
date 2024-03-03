@@ -3,30 +3,46 @@
  *  It's fun to be friends with friends.
  */
 
-
 class Character {
     name
-    health = 100
+    description = ""
+    level = 0
+    experience = 0
+    health_current = 100
+    health_max = 100
+    energy_current = 100
+    energy_max = 100
+    // base stats
+    stat_salt               = 10
+    stat_panache            = 10
+    stat_tenacity           = 10
+    stat_compassion         = 10
+    stat_wit                = 10
+    stat_executive_function = 10
+    stat_luck               = 10
+    // belongings
     inventory = []
     consumables = {}
-    static MAX_HEALTH = 100
 
-    // one way to add defaults: give constructor default values
-    constructor (name, health, inventory) {
-      // one way to add defaults: have logic inside constructor
+    constructor (name = "Bobert", health=100, inventory=[], consumables={}) {
         if (name) this.name = name;
-        if (health) this.health = health;
-        if (inventory) {this.inventory = inventory} else {this.inventory = ["the courage to change the world"]};
+        if (health) {
+            this.health_current = health;
+            this.health_max = health;
+        }
+        if (Array.isArray(inventory)) {this.inventory = inventory} else {this.inventory = ["hope for a better tomorrow"]};
+        if (typeof consumables == 'object' && !Array.isArray(consumables)) {
+            this.inventory = inventory
+        } else {
+            this.inventory = {whoopass: 99, lollipops: 0}
+        }
     }
 
     const roll1dX = (dX, mod=0) => { return Math.floor(Math.random() * dX) + 1 + mod }
-
     const rolldX = (dX, mod=0) => { return roll1dX(dX, mod) }
-
     const rollNdX = (N, dX, mod = 0) => {
       return mod + (N<1 ? 0 : this.roll1dX(dX) + (N==1 ? 0 : this.rollNdX(N-1, dX)) )
     }
-
     const roll = (N = 1, dX = 20, mod = 0) => {
         const result = rollNdX(N=N, dX=dX, mod=mod);
         console.log(`${this.name} rolled a ${result}.`)
@@ -35,26 +51,14 @@ class Character {
     gainItem(...item) { this.inventory.push(...item) };
     loseItem(item) { this.inventory.delete(this.inventory.lastIndexOf(item)) };
 
-    addItem(item, count=1) {this.consumables[item] = count + (isNaN(this.consumables.item) ? 0 : this.consumables.item) }
+    addItem(item, count=1, ...moreitems) {
+        this.consumables[item] = count + (isNaN(this.consumables.item) ? 0 : this.consumables.item)
+        if (moreitems.length) { addItem(...moreItems); }
+    }
     subtractItem(item, count=1) {this.consumables[item] = count + (isNaN(this.consumables.item) ? 0 : this.consumables.item) }
 
-    dies () {
-      console.log('URK! :ded: 💀');
-    }
+    dies () { console.log('URK! :ded: 💀'); }
 }
-
-let theArgumentor // elucidate the behavior of construction parameters
-theArgumentor = new Character();
-console.log(`\nCharacter():\n${theArgumentor}`)
-theArgumentor = new Character("Rocky");
-console.log('\nCharacter("Rocky"):'); console.log(theArgumentor)
-theArgumentor = new Character(name="Rocky");
-console.log('\nCharacter(name="Rocky"):\n', theArgumentor)
-theArgumentor = new Character(health=99);
-console.log('\nCharacter(health=99):\n' + theArgumentor.toString())
-theArgumentor = new Character(inventory=["I got sunshine"]);
-console.log('\nCharacter(inventory=["I got sunshine"]):'); console.dir(theArgumentor)
-
 
 class Adventurer extends Character {
     static ROLES = [
@@ -79,7 +83,9 @@ class Adventurer extends Character {
         'Talent Agent',
         'Talent Agent who does not feel bad about the state of ATS technology',  // must be Evil
         'Hapless Patsy',
-        'a lowly stablehand',
+        'Motivational Speaker',
+        'Personal Assistant',
+        'miserable peon',
     ]
 
     constructor (name, role) {
@@ -89,10 +95,11 @@ class Adventurer extends Character {
       if (Adventurer.ROLES.includes(role)) {
           this.role = role;
       } else {
-        this.role = 'a lowly stablehand'
+        this.role = 'miserable peon'
       }
-      // Every adventurer starts with a bed and 50 gold coins.
-      this.inventory.push("bedroll", "50 gold coins");
+      // Starting inventory
+      this.gainItem("bedroll")
+      this.addItem("gold", 50);
     }
 
     // Adventurers have the ability to scout ahead of them.
