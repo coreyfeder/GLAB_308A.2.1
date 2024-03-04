@@ -26,6 +26,7 @@ class StatBlock {
         this.#executive_function = executive_function
         this.#luck = luck
 
+
     // constructor(modifiers) {
     //     // e.g., { luck: -5 }
     //     for (let mod in modifiers) {
@@ -38,12 +39,29 @@ class StatBlock {
     // }
     }
 
+
+    static validateValue(value) {
+        if isNaN(value) {
+            return none
+        } else {
+            return Math.max(
+                Math.min(
+                    Math.floor(value),
+                    StatBlock.StatMax
+                ), 
+            StatBlock.StatMin);
+        }
+    }
+
     // getters & setters
     get salt() { return this.#salt; }
     
     // setter
-    set salt(val) { this.#salt = Math.max(Math.min(val, StatBlock.StatMax), StatBlock.StatMin); }
-    
+    set salt(value) {
+        if (!isNaN(value)) {
+            this.#salt = validateValue(value) or this.#salt
+        }
+    }
 }
 
 console.log('\nTesting:')

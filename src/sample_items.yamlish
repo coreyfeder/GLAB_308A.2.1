@@ -1,0 +1,31 @@
+# inventory
+- sword
+    level: 1
+    description: A simple longblade.
+    worth: 5
+- elvish longsword
+    level: 20
+    description: >
+        A fine slip of elvish steel. It is inscribed with so many overlapping runes and 
+        glyphs, there is barely any metal left. That explains why it's so light.
+    secretAmbition: >
+        This blade longs to drink the blood of the one who forged it; and it will drink
+        the blood of all those who wield it to any other end.
+- wooden shield
+    level: 1
+    description: a sturdy circle of wood
+    worth: 5
+
+# "inventory" when empty-handed:
+- the courage to change the world
+- hope for a better tomorrow
+- a dollar and a dream
+- the hopes of their entire village
+- faith
+
+# consumables
+- {arrows: 20, rations: 10, torches: 4}
+- {whoopass: 99, lollipops: 0}
+- {fucks: 0}
+- {nerves: 1}
+- {lives: 9}

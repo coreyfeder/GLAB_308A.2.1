@@ -13,22 +13,28 @@ class Character {
     energy_current = 100
     energy_max = 100
     // base stats
-    stat_salt               = 10
-    stat_panache            = 10
-    stat_tenacity           = 10
-    stat_compassion         = 10
-    stat_wit                = 10
-    stat_executive_function = 10
-    stat_luck               = 10
+    stats = {
+        salt               : 10,
+        panache            : 10,
+        tenacity           : 10,
+        compassion         : 10,
+        wit                : 10,
+        executive_function : 10,
+        luck               : 10,
+    }
     // belongings
     inventory = []
     consumables = {}
 
-    constructor (name = "Bobert", health=100, inventory=[], consumables={}) {
+    constructor (name = "Bobert", health=100, energy=100, inventory=[], consumables={}) {
         if (name) this.name = name;
         if (health) {
             this.health_current = health;
             this.health_max = health;
+        }
+        if (energy) {
+            this.energy_current = energy;
+            this.energy_max = energy;
         }
         if (Array.isArray(inventory)) {this.inventory = inventory} else {this.inventory = ["hope for a better tomorrow"]};
         if (typeof consumables == 'object' && !Array.isArray(consumables)) {
@@ -91,7 +97,6 @@ class Adventurer extends Character {
     constructor (name, role) {
       super(name);
       // Adventurers have specialized roles.
-      debugger;
       if (Adventurer.ROLES.includes(role)) {
           this.role = role;
       } else {
@@ -165,7 +170,7 @@ class Companion extends Character {
   }
   
 
-const robin = new Adventurer(name="Robin", role="the Chosen One");
+const adventurer = new Adventurer(name="Robin", role="the Chosen One");
 robin.inventory = ["sword", "potion", "artifact"];
 robin.companion = new Character("Leo");
 robin.companion.type = "Cat";
