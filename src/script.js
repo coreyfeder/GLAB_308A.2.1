@@ -5,7 +5,6 @@
 
 class Character {
     name
-    type
     description = ""
     level = 0
     experience = 0
@@ -15,17 +14,21 @@ class Character {
     energy_max = 100
     // base stats
     stats = {
-        salt               : 10,
-        panache            : 10,
-        tenacity           : 10,
-        compassion         : 10,
-        wit                : 10,
-        executive_function : 10,
-        luck               : 10,
+        salt                : 0,
+        panache             : 0,
+        cardio              : 0,
+        tenacity            : 0,
+        compassion          : 0,
+        wit                 : 0,
+        executive_function  : 0,
+        luck                : 0,
     }
     // belongings
     inventory = []
     consumables = {}
+    // other
+    companions = []
+    affiliations = []  // guilds, governments, gangs, etc. 
 
     constructor (name = "Bobert", health=100, energy=100, inventory=[], consumables={}) {
         if (name) this.name = name;
@@ -111,30 +114,147 @@ class Adventurer extends Character {
         this.addItem("gold", 50);
     }
 
+    adoptCompanion (type, name) {
+        let newFriend = new Companion(this, type, name);
+        this.companions.push(newFriend);
+        return newFriend;
+    }
+
     // Adventurers have the ability to scout ahead of them.
     scout() {
         console.log(`${this.name} is scouting ahead...`);
         this.roll();
     }
 
+    // Rest up in combat to regain energy
+    rest() {
+        let energyRegained = Math.floor(self.roll()/4) + 5 + self.tenacity
+    }
+
+
     // Loot the bodies, you murder hobo.
     loot() {
         console.log(
-            `You rifle through the belongings of the miserable creature who now lies in the dust. 
-            Sifting through the record and wreckage of a life cut short, you cast aside treasured
-            scraps; such paltry things represent this creature's thoughts, deeds, and dreams...
-            all worthless to you unless they can be pawned for your filthy lucre.`);
+            "You rifle through the belongings of the miserable creature who now lies " +
+            "in the dust. Sifting through the record and wreckage of a life cut short, " +
+            "you cast aside treasured scraps; such paltry things represent this creature's " +
+            "thoughts, deeds, and dreams... all worthless to you unless they can be pawned " +
+            "for your filthy lucre.");
         this.roll();
     }
-  }
-  
+}
+
+    /* role: {
+        health: starting/max health modifier,
+        energy: starting/max energy modifier,
+        stats: {
+            {stat}: stat modifier, [...]
+        },
+        inventory: [starting inventory],
+        skills: [proficiencies],
+        abilities: [special abilities: override methods to create unique effects; consumes energy],
+    } */
+    /* example: {
+        health: 0, 
+        energy: 0, 
+        stats: {
+            salt: 0, 
+            panache: 0, 
+            cardio: 0, 
+            tenacity: 0, 
+            compassion: 0, 
+            wit: 0, 
+            executive_function: 0, 
+            luck: 0,
+        }
+    }, */
+const ROLE_SPECS = {
+        'Fighter': {
+            health: 10, 
+            energy: -10, 
+            stats:{
+                salt: +3, 
+                tenacity: +1, 
+                compassion: -4, 
+                wit: -2,
+            }, 
+            ["sword", "shield"],
+            ["intimidation", "drinking"],
+            [
+                { name: "bull rush", type: "attack", cost: 35, description: "roll(self.salt) vs. roll(enemy.tenacity); success = stun target for one turn." },
+                { name: "walk it off", type: "buff", cost: 40, description: "regain 50 health. usable once per combat." },
+            ]
+        },
+        'Healer': {
+            health: 0, 
+            energy: +10, 
+            stats: {
+                salt: -4,
+                tenacity: +1,
+                compassion: +5,
+                executive_function: +3,
+                luck: +1,
+            },
+            ["holy symbol", "wand of restoration (3)", "a really good chicken soup recipe"],
+            ["medicine", "herbalism", "anatomy"],
+            [
+                { name: "healing word", type: "buff", cost: 20, description: "heal ally with lowest health" },
+                { name: "restoration", type: "buff", cost: 0, item_charges: "wand of restoration", description: "remove all negative statuses from an ally" },
+            ]
+        },
+        'Wizard': {
+            health: -20, 
+            energy: +25
+
+        },
+        'Cleric': {
+            health: +10,
+            energy: +10,
+            ...,
+            [
+                { name: "sanctuary", type: "buff", cost: 30, description: "ally with the lowest health cannot be targeted by enemies next turn" }
+            ]
+        },
+        'Assassin': {
+            abilities: [
+                { name: "melt into shadow", type: "defense", cost: 30, description: "becomes Hidden. While Hidden, cannot be targeted. Loses Hidden when attacking or taking damage." },
+                { name: "darkness' embrace", type: "attack", cost: 20, requires: self.Hidden, description: "a venemous strike from the shadows: roll(self.panache) vs. roll(enemy.executive_function); success = damage * 1.25 and target is Poisoned." },
+            ]
+        },
+        'Archer': {},
+        'Thief': {},
+        'Thief with a Heart of Gold': {},
+        'Monk (chanty-chanty)': {},
+        'Monk (flippy-fighty)': {},
+        'Monk (OCD detective)': {},
+        'Bard (Minstrel)': {},
+        'Bard (Shakespeare, THE Bard)': {},
+        'Bard (Chatbot)': {},
+        'Bartender': {},
+        'Software Engineer': {},  // Luck -10
+        'Teacher (aka "Paladin")': {},
+        'AI Prompt Engineer (aka "Illusionist")': {},
+        'Crypto Bro (aka "Evil Illusionist")': {},
+        'Accountant': {},
+        'Dog Walker': {},
+        'Lovable Sidekick': {},
+        'Sassy Sidekick': {},
+        'Useless Sidekick': {},
+        'Talent Manager': {},
+        'Talent Manager who does not feel bad about the state of ATS technology': {},
+        'Motivational Speaker': {},
+        'Personal Assistant': {},
+        'miserable peon': {},
+}
 
 class Companion extends Character {
     companion_to
     companions = [];
     
-    constructor (name, role) {
-        super(name);
+    constructor (companion_to, type, name) {
+        super(name)
+        this.companion_to = companion_to
+        this.type = type
     }
 
     heroically_die_saving_the_hero () {
