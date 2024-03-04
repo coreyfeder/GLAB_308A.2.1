@@ -3,15 +3,32 @@
  *  It's fun to be friends with friends.
  */
 
+// treating this like an enumeration, to limit impact of inevitable typos
+const salt = "salt"
+const panache = "panache"
+const cardio = "cardio"
+const tenacity = "tenacity"
+const compassion = "compassion"
+const wit = "wit"
+const executive_function = "executive_function"
+const luck = "luck"
+
 class Character {
+    static MAX_ENERGY = 100
+    static MAX_HEALTH = 100
+    static ENERGY_MAX = 100
+    static HEALTH_MAX = 100
+    static STAT_MAX = 20
+    static STAT_MIN = -10
     name
     description = ""
     level = 0
     experience = 0
     health_current = 100
-    health_max = 100
+    health_restore = 5
     energy_current = 100
-    energy_max = 100
+    energy_restore = 20
+    is_conscious = true
     // base stats
     stats = {
         salt                : 0,
@@ -21,25 +38,19 @@ class Character {
         compassion          : 0,
         wit                 : 0,
         executive_function  : 0,
-        luck                : 0,
+        luck                : 5,  // spice up every roll
     }
     // belongings
     inventory = []
     consumables = {}
     // other
     companions = []
-    affiliations = []  // guilds, governments, gangs, etc. 
+    affiliations = []  // guilds, governments, gangs, etc.
 
     constructor (name = "Bobert", health=100, energy=100, inventory=[], consumables={}) {
         if (name) this.name = name;
-        if (health) {
-            this.health_current = health;
-            this.health_max = health;
-        }
-        if (energy) {
-            this.energy_current = energy;
-            this.energy_max = energy;
-        }
+        if (health) this.health_current = health;
+        if (energy) this.energy_current = energy;
         if (Array.isArray(inventory)) {this.inventory = inventory} else {this.inventory = ["hope for a better tomorrow"]};
         if (typeof consumables == 'object' && !Array.isArray(consumables)) {
             this.inventory = inventory
@@ -47,31 +58,106 @@ class Character {
             this.inventory = {whoopass: 99, lollipops: 0}
         }
     }
+    
+    // this is tedious. is there a quicker way?
+    get salt() { return self.stats.salt; }
+    get panache() { return self.stats.panache; }
+    get cardio() { return self.stats.cardio; }
+    get tenacity() { return self.stats.tenacity; }
+    get compassion() { return self.stats.compassion; }
+    get wit() { return self.stats.wit; }
+    get executive_function() { return self.stats.executive_function; }
+    // get luck() { return self.stats.luck; }
+    get luck() { return Math.floor(Math.random * Math.abs(this.stats.luck)) }
+    
+    static validateStat(currentvalue, newvalue) {
+        if (isNaN(newvalue)) {
+            console.warn(`Cannot adjust a stat by "${newvalue}".\n  (${this.name}, ${currentvalue}, ${newvalue})`);
+            return currentvalue;
+        } else {
+            newvalue = Math.floor(newvalue)
+            newvalue = Math.min(newStatValue, this.STAT_MAX)
+            newvalue = Math.max(newStatValue, this.STAT_MIN)
+            return newvalue;
+        }
+    }
 
+    set salt(value) { self.stats.salt = this.validateStat(self.stats.salt, value); }
+    set panache(value) { self.stats.panache = this.validateStat(self.stats.panache, value); }
+    set cardio(value) { self.stats.cardio = this.validateStat(self.stats.cardio, value); }
+    set tenacity(value) { self.stats.tenacity = this.validateStat(self.stats.tenacity, value); }
+    set compassion(value) { self.stats.compassion = this.validateStat(self.stats.compassion, value); }
+    set wit(value) { self.stats.wit = this.validateStat(self.stats.wit, value); }
+    set executive_function(value) { self.stats.executive_function = this.validateStat(self.stats.executive_function, value); }
+    set luck(value) { self.stats.luck = value; }
+
+    // making rolls
     roll1dX = (dX, mod=0) => { return Math.floor(Math.random() * dX) + 1 + mod }
     rolldX = (dX, mod=0) => { return this.roll1dX(dX, mod) }
     rollNdX = (N, dX, mod = 0) => {
       return mod + (N<1 ? 0 : this.roll1dX(dX) + (N==1 ? 0 : this.rollNdX(N-1, dX)) )
     }
+    // dumbLuck() {
+    //     return floor(Math.random * Math.abs(this.luck))
+    // }
     roll = (N = 1, dX = 20, mod = 0) => {
         const result = this.rollNdX(N=N, dX=dX, mod=mod);
         console.log(`${this.name} rolled a ${result}.`)
     }
-
-    dumbLuck() {
-        return roll(this.pedantry).floor(Math.random * this.luck)
+    roll = (
+        stat=null, 
+        N=1, 
+        dX=20, 
+        mod=this.luck,  // fate's finger, by default
+    ) => {
+        let newMod = mod + (this.hasOwnProperty(stat) ? this.stats[stat] : 0)
+        const result = this.rollNdX(N=N, dX=dX, mod=newMod);
+        console.log(`${this.name} rolled a ${result}.`)
     }
 
-    gainItem(...item) { this.inventory.push(...item) };
-    loseItem(item) { this.inventory.delete(this.inventory.lastIndexOf(item)) };
+     restoreHealth(hp, overrideLimits=false) {
+        let gain = hp
+        let newHealth = this.health_current + hp
+        if (!overrideLimits && (newHealth > HEALTH_MAX)) {
+            gain = (HEALTH_MAX - this.health_current)
+            this.health_current = HEALTH_MAX;
+        }
+        console.log(`${this.name} regains ${gain} health.`)
+        return gain
+     }
 
-    addItem(item, count=1, ...moreitems) {
-        this.consumables[item] = count + (isNaN(this.consumables.item) ? 0 : this.consumables.item)
-        if (moreitems.length) { addItem(...moreItems); }
+    restoreEnergy(ep, overrideLimits=false) {
+        let gain = ep
+        let newEnergy = this.energy_current + ep
+        if (!overrideLimits && (newEnergy > ENERGY_MAX)) {
+            gain = (ENERGY_MAX - this.energy_current)
+            this.energy_current = ENERGY_MAX;
+        }
+        console.log(`${this.name} regains ${gain} energy.`)
+        return gain
+     }
+
+     gainItem(...item) { this.inventory.push(...item) };
+     loseItem(item) { this.inventory.delete(this.inventory.lastIndexOf(item)) };
+ 
+     addItem(item, count=1, ...moreitems) {
+         this.consumables[item] = count + (isNaN(this.consumables.item) ? 0 : this.consumables.item)
+         if (moreitems.length) { addItem(...moreItems); }
+     }
+     subtractItem(item, count=1) {this.consumables[item] = count + (isNaN(this.consumables.item) ? 0 : this.consumables.item) }
+  
+     turnBegins() {
+        // override for time-based effects
+     }
+
+     turnEnds() {
+        // override for time-based effects
+     }
+
+     dies() { 
+        this.is_conscious = false; 
+        console.log(`URK! ${this.name} is down! 💀`);
     }
-    subtractItem(item, count=1) {this.consumables[item] = count + (isNaN(this.consumables.item) ? 0 : this.consumables.item) }
-
-    dies () { console.log('URK! :ded: 💀'); }
 }
 
 class Adventurer extends Character {
@@ -130,13 +216,6 @@ class Adventurer extends Character {
         this.roll();
     }
 
-    // Rest up in combat to regain energy
-    rest() {
-        let energyRegained = Math.floor(this.roll()/4) + 5 + this.cardio + (Number(this.restore) ? Number(this.restore : 0)) + this.dumbLuck())
-        return energyRegained
-    }
-
-
     // Loot the bodies, you murder hobo.
     loot() {
         console.log(
@@ -147,11 +226,19 @@ class Adventurer extends Character {
             "for your filthy lucre.");
         this.roll();
     }
+
+    // TODO: create separate class of combat actions
+
+    rest() {
+        // Rest up in combat to regain energy
+        let restored = this.restoreEnergy(this.energy_restore + this.luck)
+    }
 }
 
+
     /* role: {
-        health: starting/max health modifier,
-        energy: starting/max energy modifier,
+        health: health restoration rate,
+        energy: energy restoration rate,
         stats: {
             {stat}: stat modifier, [...]
         },
@@ -175,24 +262,24 @@ class Adventurer extends Character {
     }, */
 const ROLE_SPECS = {
         'Fighter': {
-            health: 10, 
-            energy: -10, 
+            modifier_to_health_restoration: +7, 
+            modifier_to_energy_restoration: -5, 
             stats:{
                 salt: +3, 
                 tenacity: +1, 
                 compassion: -4, 
                 wit: -2,
             }, 
-            ["sword", "shield"],
-            ["intimidation", "drinking"],
-            [
+            inventory: ["sword", "shield", "chain armor"],
+            skills: ["intimidation", "drinking"],
+            abilities: [
                 { name: "bull rush", type: "attack", cost: 35, description: "roll(this.salt) vs. roll(enemy.tenacity); success = stun target for one turn." },
                 { name: "walk it off", type: "buff", cost: 40, description: "regain 50 health. usable once per combat." },
             ]
         },
         'Healer': {
-            health: 0, 
-            energy: +10, 
+            modifier_to_health_restoration: +5, 
+            modifier_to_energy_restoration: +10, 
             stats: {
                 salt: -4,
                 tenacity: +1,
@@ -200,41 +287,46 @@ const ROLE_SPECS = {
                 executive_function: +3,
                 luck: +1,
             },
-            ["holy symbol", "wand of restoration (3)", "a really good chicken soup recipe"],
-            ["medicine", "herbalism", "anatomy"],
-            [
+            inventory: ["plague mask", "herbal balm", "wand of restoration (3)", "a really good chicken soup recipe"],
+            skills: ["medicine", "herbalism", "anatomy"],
+            abilities: [
                 { name: "healing word", type: "buff", cost: 20, description: "heal ally with lowest health" },
                 { name: "restoration", type: "buff", cost: 0, item_charges: "wand of restoration", description: "remove all negative statuses from an ally" },
             ]
         },
         'Wizard': {
-            health: -20, 
-            energy: +25
+            modifier_to_health_restoration: -8, 
+            modifier_to_energy_restoration: +15,
             stats: {
                 salt: -5, 
-                panache: -2, 
-                cardio: 3, 
-                tenacity: -2, 
-                compassion: 3, 
-                wit: 2, 
-                executive_function: 5, 
-                luck: 2,
-                pedantry: 3,
+                cardio: -2, 
+                wit: +2, 
+                executive_function: +5, 
+                pedantry: +3,
             },
-            ["staff", "robe", "pointy hat", "spellbook", "mana potion (2)"],
-            ["arcane", "alchemy", "demonology", "pointy hats"],
-            [
+            inventory: ["staff", "robe", "pointy hat", "spellbook", "mana potion (2)"],
+            skills: ["arcane", "alchemy", "demonology", "pointy hats"],
+            abilities: [
                 { name: "fireball", type: "attack", cost: 50, description: "[AOE] damage each enemy failing a roll(enemy.cardio) vs. your roll(this.pedantry). Affects enemies that cannot be targeted." },
                 { name: "magic missile", type: "attack", cost: 10, description: "pew!" },
-            ]
-
+            ],
         },
         'Cleric': {
-            health: +10,
-            energy: +10,
-            ...,
-            [
-                { name: "sanctuary", type: "buff", cost: 30, description: "ally with the lowest health cannot be targeted by enemies next turn" }
+            modifier_to_health_restoration: +5,
+            modifier_to_energy_restoration: +10,
+            stats: {
+                salt: +3, 
+                panache: -4, 
+                tenacity: +4, 
+                compassion: +5, 
+                wit: -5, 
+                luck: +7,
+            },
+            inventory: ["mace", "shield", "chain armor", "holy relic", "gold (-25)"],
+            skills: ["religion", "history", "lecture", "immune to Existential Dread"],
+            abilities: [
+                { name: "sanctuary", type: "buff", cost: 30, description: "ally with the lowest health cannot be targeted by enemies next turn" },
+                { name: "smite", type: "attack", cost: 40, description: "calling in a Favour" },
             ]
         },
         'Assassin': {
@@ -269,6 +361,14 @@ const ROLE_SPECS = {
         'miserable peon': {},
 }
 
+
+const ROLES = Object.keys(ROLE_SPECS);
+// What kind of back-assward construction is `Object.keys(myObject)`?
+// If I want the keys of myObject, how is `myObject.keys()` not the intuitive approach?
+// JavaScript, this is one of the reasons people hate you so much.
+// It's mostly Prototypes and Promises, but also this unnecessary friction.
+
+
 class Companion extends Character {
     companion_to
     companions = [];
@@ -284,11 +384,12 @@ class Companion extends Character {
         this.health = 0;
         if (this.companion_to.health <= 0) {
             console.log(`${this.companion_to.name}'s grief turns to vengeful resolution!`)
-          this.companion_to.health = this.companion_to.health_max
+          this.companion_to.health = this.companion_to.HEALTH_MAX
         }
     }
   
-    // Companions have the ability to have inappropriate biological functions.
+    // Movies have taught me that Companions sometimes have inappropriate biological functions.
+    // I think I need to watch a higher class of movie.
     gas (modifier = this.companion_to.luck) {
         let severity = super.roll();
         if (severity >= 18) {
@@ -316,7 +417,7 @@ class Companion extends Character {
             console.log(`(You regain 1 health.)`);
         }
     }
-  }
+}
   
 
 const adventurer = new Adventurer(name="Robin", role="the Chosen One");
