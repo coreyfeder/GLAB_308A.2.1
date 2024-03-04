@@ -205,6 +205,23 @@ const ROLE_SPECS = {
         'Wizard': {
             health: -20, 
             energy: +25
+            stats: {
+                salt: -5, 
+                panache: -2, 
+                cardio: 3, 
+                tenacity: -2, 
+                compassion: 3, 
+                wit: 2, 
+                executive_function: 5, 
+                luck: 2,
+                pedantry: 3,
+            },
+            ["staff", "robe", "pointy hat", "spellbook", "mana potion (2)"],
+            ["arcane", "alchemy", "demonology", "pointy hats"],
+            [
+                { name: "fireball", type: "attack", cost: 50, description: "[AOE] damage each enemy failing a roll(enemy.cardio) vs. your roll(this.pedantry). Affects enemies that cannot be targeted." },
+                { name: "magic missile", type: "attack", cost: 10, description: "pew!" },
+            ]
 
         },
         'Cleric': {
