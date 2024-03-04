@@ -13,6 +13,136 @@ const wit = "wit"
 const executive_function = "executive_function"
 const luck = "luck"
 
+
+// TODO: Implement stats
+// TODO: Implement combat abilities
+
+/* role: {
+    health: health restoration rate,
+    energy: energy restoration rate,
+    stats: {
+        {stat}: stat modifier, [...]
+    },
+    inventory: [starting inventory],
+    skills: [proficiencies],
+    abilities: [special abilities: override methods to create unique effects; consumes energy],
+} */
+const ROLE_SPECS = {
+    'Fighter': {
+        modifier_to_health_restoration: +7, 
+        modifier_to_energy_restoration: -5, 
+        stats:{
+            salt: +3, 
+            tenacity: +1, 
+            compassion: -4, 
+            wit: -2,
+        }, 
+        inventory: ["sword", "shield", "chain armor"],
+        skills: ["intimidation", "drinking"],
+        abilities: [
+            { name: "bull rush", type: "attack", cost: 35, description: "roll(this.salt) vs. roll(enemy.tenacity); success = stun target for one turn." },
+            { name: "walk it off", type: "buff", cost: 40, description: "regain 50 health. usable once per combat." },
+        ]
+    },
+    'Healer': {
+        modifier_to_health_restoration: +5, 
+        modifier_to_energy_restoration: +10, 
+        stats: {
+            salt: -4,
+            tenacity: +1,
+            compassion: +5,
+            executive_function: +3,
+            luck: +1,
+        },
+        inventory: ["plague mask", "herbal balm", "wand of restoration (3)", "a really good chicken soup recipe"],
+        skills: ["medicine", "herbalism", "anatomy"],
+        abilities: [
+            { name: "healing word", type: "buff", cost: 20, description: "heal ally with lowest health" },
+            { name: "restoration", type: "buff", cost: 0, item_charges: "wand of restoration", description: "remove all negative statuses from an ally" },
+        ]
+    },
+    'Wizard': {
+        modifier_to_health_restoration: -8, 
+        modifier_to_energy_restoration: +15,
+        stats: {
+            salt: -5, 
+            cardio: -2, 
+            wit: +2, 
+            executive_function: +5, 
+            pedantry: +3,
+        },
+        inventory: ["staff", "robe", "pointy hat", "spellbook", "mana potion (2)"],
+        skills: ["arcane", "alchemy", "demonology", "pointy hats"],
+        abilities: [
+            { name: "fireball", type: "attack", cost: 50, description: "[AOE] damage each enemy failing a roll(enemy.cardio) vs. your roll(this.pedantry). Affects enemies that cannot be targeted." },
+            { name: "magic missile", type: "attack", cost: 10, description: "pew!" },
+        ],
+    },
+    'Cleric': {
+        modifier_to_health_restoration: +5,
+        modifier_to_energy_restoration: +10,
+        stats: {
+            salt: +3, 
+            panache: -4, 
+            tenacity: +4, 
+            compassion: +5, 
+            wit: -5, 
+            luck: +7,
+        },
+        inventory: ["mace", "shield", "chain armor", "holy relic", "gold (-25)"],
+        skills: ["religion", "history", "lecture", "immune to Existential Dread"],
+        abilities: [
+            { name: "sanctuary", type: "buff", cost: 30, description: "ally with the lowest health cannot be targeted by enemies next turn" },
+            { name: "smite", type: "attack", cost: 40, description: "calling in a Favour" },
+        ]
+    },
+    // more classes coming soon!
+    /* 
+    'Assassin': {
+        abilities: [
+            { name: "melt into shadow", type: "defense", cost: 30, description: "becomes Hidden. While Hidden, cannot be targeted. Loses Hidden when attacking or taking damage." },
+            { name: "darkness' embrace", type: "attack", cost: 20, requires: this.Hidden, description: "a venemous strike from the shadows: roll(this.panache) vs. roll(enemy.executive_function); success = damage * 1.25 and target is Poisoned." },
+        ]
+    },
+    'Archer (aka Offensively Stereotypical Elf)': {},
+    'Vampire': {},  // Regains health when attacks. Sparkles.
+    'Thief': {},
+    'Thief with a Heart of Gold': {},
+    'Monk (chanty-chanty)': {},
+    'Monk (flippy-fighty)': {},
+    'Monk (OCD detective)': {},
+    'Bard (Minstrel)': {},
+    'Bard (Shakespeare, THE Bard)': {},
+    'Bard (Chatbot)': {},
+    'Bartender': {},
+    'Software Engineer': {},  // Luck -10
+    'Teacher (aka "Paladin")': {},
+    'AI Prompt Engineer (aka "Illusionist")': {},
+    'Crypto Bro (aka "Evil Illusionist")': {},
+    'Accountant': {},
+    'Dog Walker': {},
+    'Lovable Sidekick': {},
+    'Sassy Sidekick': {},
+    'Useless Sidekick': {},
+    'Talent Manager': {},
+    'Talent Manager who does not feel bad about the state of ATS technology': {},
+    'Motivational Speaker': {},
+    'Personal Assistant': {},
+    'miserable peon': {},
+     */
+}
+
+// const ROLES = Object.keys(ROLE_SPECS);
+/* 
+What...the...hell kind of back-assward construction is `Object.keys(myObject)`?
+If I want the keys of myObject, how is `myObject.keys()` not the intuitive approach?
+Is there some reason it's necessary for this NOT to be an instance method? 
+Do you not trust an object to report its own keys? 
+
+JavaScript, this is one of the reasons people hate you so much.
+It's mostly Prototypes and Promises, but also this unnecessary friction.
+*/
+
 class Character {
     static MAX_ENERGY = 100
     static MAX_HEALTH = 100
@@ -47,15 +177,13 @@ class Character {
     companions = []
     affiliations = []  // guilds, governments, gangs, etc.
 
-    constructor (name = "Bobert", health=100, energy=100, inventory=[], consumables={}) {
+    constructor (name = "Bobert", inventory=[], consumables={}) {
         if (name) this.name = name;
-        if (health) this.health_current = health;
-        if (energy) this.energy_current = energy;
         if (Array.isArray(inventory)) {this.inventory = inventory} else {this.inventory = ["hope for a better tomorrow"]};
         if (typeof consumables == 'object' && !Array.isArray(consumables)) {
-            this.inventory = inventory
+            this.consumables = consumables
         } else {
-            this.inventory = {whoopass: 99, lollipops: 0}
+            this.consumables = {whoopass: 99, lollipops: 0}
         }
     }
     
@@ -68,7 +196,7 @@ class Character {
     get wit() { return self.stats.wit; }
     get executive_function() { return self.stats.executive_function; }
     // get luck() { return self.stats.luck; }
-    get luck() { return Math.floor(Math.random * Math.abs(this.stats.luck)) }
+    get luck() { return Math.floor(Math.random() * this.stats.luck) }
     
     static validateStat(currentvalue, newvalue) {
         if (isNaN(newvalue)) {
@@ -100,22 +228,26 @@ class Character {
     // dumbLuck() {
     //     return floor(Math.random * Math.abs(this.luck))
     // }
-    roll = (N = 1, dX = 20, mod = 0) => {
-        const result = this.rollNdX(N=N, dX=dX, mod=mod);
-        console.log(`${this.name} rolled a ${result}.`)
-    }
+    // roll = (N = 1, dX = 20, mod = 0) => {
+    //     const result = this.rollNdX(N=N, dX=dX, mod=mod);
+    //     console.log(`${this.name} rolled a ${result}.`)
+    // }
     roll = (
         stat=null, 
         N=1, 
         dX=20, 
         mod=this.luck,  // fate's finger, by default
     ) => {
-        let newMod = mod + (this.hasOwnProperty(stat) ? this.stats[stat] : 0)
+        let newMod = mod
+        if (stat && this.hasOwnProperty(stat)) {
+            newMod += this.stats[stat]
+        }
         const result = this.rollNdX(N=N, dX=dX, mod=newMod);
         console.log(`${this.name} rolled a ${result}.`)
-    }
+        return result
+    };
 
-     restoreHealth(hp, overrideLimits=false) {
+     restoreHealth = (hp, overrideLimits=false) => {
         let gain = hp
         let newHealth = this.health_current + hp
         if (!overrideLimits && (newHealth > HEALTH_MAX)) {
@@ -126,7 +258,7 @@ class Character {
         return gain
      }
 
-    restoreEnergy(ep, overrideLimits=false) {
+    restoreEnergy = (ep, overrideLimits=false) => {
         let gain = ep
         let newEnergy = this.energy_current + ep
         if (!overrideLimits && (newEnergy > ENERGY_MAX)) {
@@ -137,59 +269,31 @@ class Character {
         return gain
      }
 
-     gainItem(...item) { this.inventory.push(...item) };
-     loseItem(item) { this.inventory.delete(this.inventory.lastIndexOf(item)) };
+     gainItem = (...item) => { this.inventory.push(...item) };
+     loseItem = (item) => { this.inventory.delete(this.inventory.lastIndexOf(item)) };
  
-     addItem(item, count=1, ...moreitems) {
+     addItem = (item, count=1, ...moreitems) => {
          this.consumables[item] = count + (isNaN(this.consumables.item) ? 0 : this.consumables.item)
          if (moreitems.length) { addItem(...moreItems); }
      }
-     subtractItem(item, count=1) {this.consumables[item] = count + (isNaN(this.consumables.item) ? 0 : this.consumables.item) }
+     subtractItem = (item, count=1) => {this.consumables[item] = count + (isNaN(this.consumables.item) ? 0 : this.consumables.item) }
   
-     turnBegins() {
+     turnBegins = () => {
         // override for time-based effects
      }
 
-     turnEnds() {
+     turnEnds = () => {
         // override for time-based effects
      }
 
-     dies() { 
+     dies = () => { 
         this.is_conscious = false; 
         console.log(`URK! ${this.name} is down! 💀`);
     }
 }
 
 class Adventurer extends Character {
-    static ROLES = [
-        'Fighter',
-        'Healer',
-        'Wizard',
-        'Archer',
-        'Cleric',
-        'Thief',
-        'Thief with a Heart of Gold',
-        'Monk (chanty-chanty)',
-        'Monk (flippy-fighty)',
-        'Monk (OCD detective)',
-        'Bard (Minstrel)',
-        'Bard (Shakespeare, THE Bard)',
-        'Bard (Chatbot)',
-        'Bartender',
-        'Software Engineer',
-        'Teacher (aka "Paladin")',
-        'AI Prompt Engineer (aka "Illusionist")',
-        'Crypto Bro (aka "Evil Illusionist")',
-        'Accountant',
-        'Lovable Sidekick',
-        'Sassy Sidekick',
-        'Useless Sidekick',
-        'Talent Manager',
-        'Talent Manager who does not feel bad about the state of ATS technology',  // must be Evil
-        'Motivational Speaker',
-        'Personal Assistant',
-        'miserable peon',
-    ]
+    static ROLES = Object.keys(ROLE_SPECS)
 
     constructor (name, role) {
         super(name);
@@ -233,140 +337,7 @@ class Adventurer extends Character {
         // Rest up in combat to regain energy
         let restored = this.restoreEnergy(this.energy_restore + this.luck)
     }
-}
-
-
-    /* role: {
-        health: health restoration rate,
-        energy: energy restoration rate,
-        stats: {
-            {stat}: stat modifier, [...]
-        },
-        inventory: [starting inventory],
-        skills: [proficiencies],
-        abilities: [special abilities: override methods to create unique effects; consumes energy],
-    } */
-    /* example: {
-        health: 0, 
-        energy: 0, 
-        stats: {
-            salt: 0, 
-            panache: 0, 
-            cardio: 0, 
-            tenacity: 0, 
-            compassion: 0, 
-            wit: 0, 
-            executive_function: 0, 
-            luck: 0,
-        }
-    }, */
-const ROLE_SPECS = {
-        'Fighter': {
-            modifier_to_health_restoration: +7, 
-            modifier_to_energy_restoration: -5, 
-            stats:{
-                salt: +3, 
-                tenacity: +1, 
-                compassion: -4, 
-                wit: -2,
-            }, 
-            inventory: ["sword", "shield", "chain armor"],
-            skills: ["intimidation", "drinking"],
-            abilities: [
-                { name: "bull rush", type: "attack", cost: 35, description: "roll(this.salt) vs. roll(enemy.tenacity); success = stun target for one turn." },
-                { name: "walk it off", type: "buff", cost: 40, description: "regain 50 health. usable once per combat." },
-            ]
-        },
-        'Healer': {
-            modifier_to_health_restoration: +5, 
-            modifier_to_energy_restoration: +10, 
-            stats: {
-                salt: -4,
-                tenacity: +1,
-                compassion: +5,
-                executive_function: +3,
-                luck: +1,
-            },
-            inventory: ["plague mask", "herbal balm", "wand of restoration (3)", "a really good chicken soup recipe"],
-            skills: ["medicine", "herbalism", "anatomy"],
-            abilities: [
-                { name: "healing word", type: "buff", cost: 20, description: "heal ally with lowest health" },
-                { name: "restoration", type: "buff", cost: 0, item_charges: "wand of restoration", description: "remove all negative statuses from an ally" },
-            ]
-        },
-        'Wizard': {
-            modifier_to_health_restoration: -8, 
-            modifier_to_energy_restoration: +15,
-            stats: {
-                salt: -5, 
-                cardio: -2, 
-                wit: +2, 
-                executive_function: +5, 
-                pedantry: +3,
-            },
-            inventory: ["staff", "robe", "pointy hat", "spellbook", "mana potion (2)"],
-            skills: ["arcane", "alchemy", "demonology", "pointy hats"],
-            abilities: [
-                { name: "fireball", type: "attack", cost: 50, description: "[AOE] damage each enemy failing a roll(enemy.cardio) vs. your roll(this.pedantry). Affects enemies that cannot be targeted." },
-                { name: "magic missile", type: "attack", cost: 10, description: "pew!" },
-            ],
-        },
-        'Cleric': {
-            modifier_to_health_restoration: +5,
-            modifier_to_energy_restoration: +10,
-            stats: {
-                salt: +3, 
-                panache: -4, 
-                tenacity: +4, 
-                compassion: +5, 
-                wit: -5, 
-                luck: +7,
-            },
-            inventory: ["mace", "shield", "chain armor", "holy relic", "gold (-25)"],
-            skills: ["religion", "history", "lecture", "immune to Existential Dread"],
-            abilities: [
-                { name: "sanctuary", type: "buff", cost: 30, description: "ally with the lowest health cannot be targeted by enemies next turn" },
-                { name: "smite", type: "attack", cost: 40, description: "calling in a Favour" },
-            ]
-        },
-        'Assassin': {
-            abilities: [
-                { name: "melt into shadow", type: "defense", cost: 30, description: "becomes Hidden. While Hidden, cannot be targeted. Loses Hidden when attacking or taking damage." },
-                { name: "darkness' embrace", type: "attack", cost: 20, requires: this.Hidden, description: "a venemous strike from the shadows: roll(this.panache) vs. roll(enemy.executive_function); success = damage * 1.25 and target is Poisoned." },
-            ]
-        },
-        'Archer': {},
-        'Thief': {},
-        'Thief with a Heart of Gold': {},
-        'Monk (chanty-chanty)': {},
-        'Monk (flippy-fighty)': {},
-        'Monk (OCD detective)': {},
-        'Bard (Minstrel)': {},
-        'Bard (Shakespeare, THE Bard)': {},
-        'Bard (Chatbot)': {},
-        'Bartender': {},
-        'Software Engineer': {},  // Luck -10
-        'Teacher (aka "Paladin")': {},
-        'AI Prompt Engineer (aka "Illusionist")': {},
-        'Crypto Bro (aka "Evil Illusionist")': {},
-        'Accountant': {},
-        'Dog Walker': {},
-        'Lovable Sidekick': {},
-        'Sassy Sidekick': {},
-        'Useless Sidekick': {},
-        'Talent Manager': {},
-        'Talent Manager who does not feel bad about the state of ATS technology': {},
-        'Motivational Speaker': {},
-        'Personal Assistant': {},
-        'miserable peon': {},
-}
-
-
-const ROLES = Object.keys(ROLE_SPECS);
-// What kind of back-assward construction is `Object.keys(myObject)`?
-// If I want the keys of myObject, how is `myObject.keys()` not the intuitive approach?
-// JavaScript, this is one of the reasons people hate you so much.
-// It's mostly Prototypes and Promises, but also this unnecessary friction.
+};
 
 
 class Companion extends Character {
@@ -433,8 +404,11 @@ adventurer.addItem("grappling hook", "the power of friendship")
 console.log("\n\nBehold, our heroic savior!!")
 console.log(adventurer);
 
+console.log(`\nTesting Robin's luck.`)
+console.log(adventurer.luck)
+console.log(adventurer.luck)
+console.log(adventurer.luck)
 adventurer.scout()
 adventurer.scout()
 adventurer.scout()
-adventurer.loot()
 
