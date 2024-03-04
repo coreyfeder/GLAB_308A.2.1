@@ -58,6 +58,10 @@ class Character {
         console.log(`${this.name} rolled a ${result}.`)
     }
 
+    dumbLuck() {
+        return roll(this.pedantry).floor(Math.random * this.luck)
+    }
+
     gainItem(...item) { this.inventory.push(...item) };
     loseItem(item) { this.inventory.delete(this.inventory.lastIndexOf(item)) };
 
@@ -128,7 +132,8 @@ class Adventurer extends Character {
 
     // Rest up in combat to regain energy
     rest() {
-        let energyRegained = Math.floor(self.roll()/4) + 5 + self.tenacity
+        let energyRegained = Math.floor(this.roll()/4) + 5 + this.cardio + (Number(this.restore) ? Number(this.restore : 0)) + this.dumbLuck())
+        return energyRegained
     }
 
 
@@ -181,7 +186,7 @@ const ROLE_SPECS = {
             ["sword", "shield"],
             ["intimidation", "drinking"],
             [
-                { name: "bull rush", type: "attack", cost: 35, description: "roll(self.salt) vs. roll(enemy.tenacity); success = stun target for one turn." },
+                { name: "bull rush", type: "attack", cost: 35, description: "roll(this.salt) vs. roll(enemy.tenacity); success = stun target for one turn." },
                 { name: "walk it off", type: "buff", cost: 40, description: "regain 50 health. usable once per combat." },
             ]
         },
@@ -235,7 +240,7 @@ const ROLE_SPECS = {
         'Assassin': {
             abilities: [
                 { name: "melt into shadow", type: "defense", cost: 30, description: "becomes Hidden. While Hidden, cannot be targeted. Loses Hidden when attacking or taking damage." },
-                { name: "darkness' embrace", type: "attack", cost: 20, requires: self.Hidden, description: "a venemous strike from the shadows: roll(self.panache) vs. roll(enemy.executive_function); success = damage * 1.25 and target is Poisoned." },
+                { name: "darkness' embrace", type: "attack", cost: 20, requires: this.Hidden, description: "a venemous strike from the shadows: roll(this.panache) vs. roll(enemy.executive_function); success = damage * 1.25 and target is Poisoned." },
             ]
         },
         'Archer': {},
