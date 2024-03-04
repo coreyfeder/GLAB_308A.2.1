@@ -5,6 +5,7 @@
 
 class Character {
     name
+    type
     description = ""
     level = 0
     experience = 0
@@ -192,4 +193,5 @@ console.log(adventurer);
 adventurer.scout()
 adventurer.scout()
 adventurer.scout()
+adventurer.loot()
 
