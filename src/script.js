@@ -44,12 +44,12 @@ class Character {
         }
     }
 
-    const roll1dX = (dX, mod=0) => { return Math.floor(Math.random() * dX) + 1 + mod }
-    const rolldX = (dX, mod=0) => { return roll1dX(dX, mod) }
-    const rollNdX = (N, dX, mod = 0) => {
+    static roll1dX = (dX, mod=0) => { return Math.floor(Math.random() * dX) + 1 + mod }
+    static rolldX = (dX, mod=0) => { return roll1dX(dX, mod) }
+    static rollNdX = (N, dX, mod = 0) => {
       return mod + (N<1 ? 0 : this.roll1dX(dX) + (N==1 ? 0 : this.rollNdX(N-1, dX)) )
     }
-    const roll = (N = 1, dX = 20, mod = 0) => {
+    static roll = (N = 1, dX = 20, mod = 0) => {
         const result = rollNdX(N=N, dX=dX, mod=mod);
         console.log(`${this.name} rolled a ${result}.`)
     }
@@ -82,7 +82,7 @@ class Adventurer extends Character {
         'Bard, the Chatbot',
         'Software Engineer / Paladin',
         'AI Prompt Engineer / Illusionist',
-        'CPA',
+        'Accountant ',
         'Lovable Sidekick',
         'Sassy Sidekick',
         'Useless Sidekick',
@@ -97,7 +97,7 @@ class Adventurer extends Character {
     constructor (name, role) {
       super(name);
       // Adventurers have specialized roles.
-      if (Adventurer.ROLES.includes(role)) {
+      if (role in Adventurer.ROLES) {
           this.role = role;
       } else {
         this.role = 'miserable peon'
