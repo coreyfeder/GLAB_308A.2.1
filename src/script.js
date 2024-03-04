@@ -44,13 +44,13 @@ class Character {
         }
     }
 
-    static roll1dX = (dX, mod=0) => { return Math.floor(Math.random() * dX) + 1 + mod }
-    static rolldX = (dX, mod=0) => { return roll1dX(dX, mod) }
-    static rollNdX = (N, dX, mod = 0) => {
+    roll1dX = (dX, mod=0) => { return Math.floor(Math.random() * dX) + 1 + mod }
+    rolldX = (dX, mod=0) => { return this.roll1dX(dX, mod) }
+    rollNdX = (N, dX, mod = 0) => {
       return mod + (N<1 ? 0 : this.roll1dX(dX) + (N==1 ? 0 : this.rollNdX(N-1, dX)) )
     }
-    static roll = (N = 1, dX = 20, mod = 0) => {
-        const result = rollNdX(N=N, dX=dX, mod=mod);
+    roll = (N = 1, dX = 20, mod = 0) => {
+        const result = this.rollNdX(N=N, dX=dX, mod=mod);
         console.log(`${this.name} rolled a ${result}.`)
     }
 
@@ -98,44 +98,55 @@ class Adventurer extends Character {
     ]
 
     constructor (name, role) {
-      super(name);
-      // Adventurers have specialized roles.
-      if (role in Adventurer.ROLES) {
-          this.role = role;
-      } else {
-        this.role = 'miserable peon'
-      }
-      // Starting inventory
-      this.gainItem("bedroll")
-      this.addItem("gold", 50);
+        super(name);
+        // Adventurers have specialized roles.
+        if (role in Adventurer.ROLES) {
+            this.role = role;
+        } else {
+            this.role = 'miserable peon'
+        }
+        // Starting inventory
+        this.gainItem("bedroll")
+        this.addItem("gold", 50);
     }
 
     // Adventurers have the ability to scout ahead of them.
     scout() {
-      console.log(`${this.name} is scouting ahead...`);
-      super.roll();
+        console.log(`${this.name} is scouting ahead...`);
+        this.roll();
     }
 
     // Loot the bodies, you murder hobo.
     loot() {
-        console.log(`You rifle through the belongings of the sentient creature who now lies dead, searching pockets and folds for any valuables. You sift through the record and wreckage of a life, hunting for any relic of its actions, hopes, or dreams that you might pawn for your filthy lucre.`);
-        super.roll();
+        console.log(
+            `You rifle through the belongings of the miserable creature who now lies in the dust. 
+            Sifting through the record and wreckage of a life cut short, you cast aside treasured
+            scraps; such paltry things represent this creature's thoughts, deeds, and dreams...
+            all worthless to you unless they can be pawned for your filthy lucre.`);
+        this.roll();
     }
   }
   
 
 class Companion extends Character {
+    companion_to
+    companions = [];
+    
     constructor (name, role) {
-      super(name);
-      // Adventurers have specialized roles.
-      this.role = role;
-      // Every adventurer starts with a bed and 50 gold coins.
-      this.inventory.push("bedroll", "50 gold coins");
+        super(name);
     }
-    parasites = [];
 
+    heroically_die_saving_the_hero () {
+        console.log(`NOOOO! ${this.name}! 😭`);
+        this.health = 0;
+        if (this.companion_to.health <= 0) {
+            console.log(`${this.companion_to.name}'s grief turns to vengeful resolution!`)
+          this.companion_to.health = this.companion_to.health_max
+        }
+    }
+  
     // Companions have the ability to have inappropriate biological functions.
-    fart (modifier = 0) {
+    gas (modifier = this.companion_to.luck) {
         let severity = super.roll();
         if (severity >= 18) {
             console.log(`An unknown toxin burns your eyes!`);
@@ -162,27 +173,23 @@ class Companion extends Character {
             console.log(`(You regain 1 health.)`);
         }
     }
-
-    heroically_die_saving_the_hero () {
-      console.log(`Nooooooo! ${this.name}! 😭`);
-      this.health = 0;
-      if (this.parent.health <= 0) {
-        this.parent.health = 1
-      };
-    }
   }
   
 
 const adventurer = new Adventurer(name="Robin", role="the Chosen One");
-robin.inventory = ["sword", "potion", "artifact"];
-robin.companion = new Character("Leo");
-robin.companion.type = "Cat";
-robin.companion.companion = new Character("Frank");
-robin.companion.companion.type = "Flea";
-robin.companion.companion.inventory = ["small hat", "sunglasses"];
+adventurer.inventory = ["sword", "potion", "artifact"];
+adventurer.companion = new Character("Leo");
+adventurer.companion.type = "Cat";
+adventurer.companion.companion = new Character("Frank");
+adventurer.companion.companion.type = "Flea";
+adventurer.companion.companion.inventory = ["small hat", "sunglasses"];
 
-robin.addItem("grappling hook", "the power of friendship")
+adventurer.addItem("grappling hook", "the power of friendship")
 
 console.log("\n\nBehold, our heroic savior!!")
-console.log(robin);
+console.log(adventurer);
+
+adventurer.scout()
+adventurer.scout()
+adventurer.scout()
 
