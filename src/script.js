@@ -246,7 +246,7 @@ class Character {
             newMod += this.stats[stat]
         }
         const result = this.rollNdX(N=N, dX=dX, mod=newMod);
-        console.log(`${this.name} rolled a ${result}.`)
+        // console.debug(`${this.name} rolled a ${result}.`)
         return result
     }
 
@@ -256,19 +256,19 @@ class Character {
     }
 
     hasEnoughEnergy = (exhaustion) => {
-        return this.energuy_current >= exhaustion
+        return this.energy_current >= exhaustion
     }
 
     loseEnergy = (exhaustion) => {
-        this.energuy_current = max(this.energuy_current - exhaustion, 0)
+        this.energy_current = max(this.energy_current - exhaustion, 0)
     }
 
      restoreHealth = (hp, overrideLimits=false) => {
         let gain = hp
         let newHealth = this.health_current + hp
-        if (!overrideLimits && (newHealth > this.HEALTH_MAX)) {
-            gain = (this.HEALTH_MAX - this.health_current)
-            this.health_current = this.HEALTH_MAX;
+        if (!overrideLimits && (newHealth > Adventurer.HEALTH_MAX)) {
+            gain = (Adventurer.HEALTH_MAX - this.health_current)
+            this.health_current = Adventurer.HEALTH_MAX;
         }
         // console.log(`${this.name} regains ${gain} health.`)
         return gain
@@ -277,18 +277,18 @@ class Character {
     restoreEnergy = (ep, overrideLimits=false) => {
         let gain = ep
         let newEnergy = this.energy_current + ep
-        if (!overrideLimits && (newEnergy > this.ENERGY_MAX)) {
-            gain = (this.ENERGY_MAX - this.energy_current)
-            this.energy_current = this.ENERGY_MAX;
+        if (!overrideLimits && (newEnergy > Adventurer.ENERGY_MAX)) {
+            gain = (Adventurer.ENERGY_MAX - this.energy_current)
+            this.energy_current = Adventurer.ENERGY_MAX;
         }
         // console.log(`${this.name} regains ${gain} energy.`)
         return gain
      }
 
      fullRestore = () => {
-        this.restoreHealth(this.HEALTH_MAX)
-        this.restoreEnergy(this.ENERGY_MAX)
-        console.log(`${this.name} fully recovers their health and energy.`)
+        this.restoreHealth(Adventurer.HEALTH_MAX)
+        this.restoreEnergy(Adventurer.ENERGY_MAX)
+        // console.debug(`${this.name} fully recovers their health (${this.health_current}) and energy (${this.energy_current}).`)
      }
 
      gainItem = (...item) => { this.inventory.push(...item) };
@@ -369,8 +369,8 @@ class Adventurer extends Character {
 
         // start at full health. the instructions don't indicate this, but fair's fair.
         
-        console.group(`Duel: ${this.name} vs ${opponent.name}`)
-        console.log(`${this.name} has issued a challenge to ${opponent.name}! To the Arena!`)
+        console.group(`\nDuel: ${this.name} vs ${opponent.name}`)
+        console.log(`${this.name.toUpperCase()} has issued a challenge to ${opponent.name.toUpperCase()}! To the Arena!`)
         
         console.log(`Wait, while the combatants ready themselves...`)
         let challengerRoll, opponentRoll, victor, defeated
@@ -385,7 +385,7 @@ class Adventurer extends Character {
             rounds++
             challengerRoll = this.roll()
             opponentRoll = opponent.roll()
-            console.log(`${challengerRoll} to ${opponentRoll}`)
+            // console.debug(`  (${this.name}'s ${challengerRoll} to ${opponent.name}'s ${opponentRoll}`)
             if (challengerRoll > opponentRoll) {
                 opponent.health_current -= 1
             } else if (challengerRoll < opponentRoll) {
@@ -484,7 +484,7 @@ adventurer.scout()
 adventurer.scout()
 adventurer.scout()
 
-console.log(`Let's fight for fun!`)
+console.log(`\nLet's fight for fun!`)
 let fighter = new Adventurer("Fiona", "Fighter")
 let healer = new Adventurer("Helena", "Healer")
 let wizard = new Adventurer("Wanda", "Wizard")
@@ -495,7 +495,7 @@ fighter.duel(healer)
 cleric.duel(fighter)
 healer.duel(wizard)
 
-console.log(`After four exhibition bouts:`)
+console.log(`\nAfter four exhibition bouts:`)
 for (let combatant of [cleric, fighter, healer, wizard]) {
     console.log(`  ${combatant.name} has scored ${combatant.duel_victories} victories!`)
 }
