@@ -16,6 +16,8 @@ const luck = "luck"
 
 // TODO: Implement stats
 // TODO: Implement combat abilities
+// TODO: Create separate class of combat actions
+
 
 /* role: {
     health: health restoration rate,
@@ -158,6 +160,7 @@ class Character {
     health_restore = 5
     energy_current = 100
     energy_restore = 20
+    gold = 0
     is_conscious = true
     // base stats
     stats = {
@@ -245,28 +248,47 @@ class Character {
         const result = this.rollNdX(N=N, dX=dX, mod=newMod);
         console.log(`${this.name} rolled a ${result}.`)
         return result
-    };
+    }
+
+    loseHealth = (damage) => {
+        this.health_current = max(this.health_current - damage, 0)
+        if (this.health_current <= 0) this.dies();
+    }
+
+    hasEnoughEnergy = (exhaustion) => {
+        return this.energuy_current >= exhaustion
+    }
+
+    loseEnergy = (exhaustion) => {
+        this.energuy_current = max(this.energuy_current - exhaustion, 0)
+    }
 
      restoreHealth = (hp, overrideLimits=false) => {
         let gain = hp
         let newHealth = this.health_current + hp
-        if (!overrideLimits && (newHealth > HEALTH_MAX)) {
-            gain = (HEALTH_MAX - this.health_current)
-            this.health_current = HEALTH_MAX;
+        if (!overrideLimits && (newHealth > this.HEALTH_MAX)) {
+            gain = (this.HEALTH_MAX - this.health_current)
+            this.health_current = this.HEALTH_MAX;
         }
-        console.log(`${this.name} regains ${gain} health.`)
+        // console.log(`${this.name} regains ${gain} health.`)
         return gain
      }
 
     restoreEnergy = (ep, overrideLimits=false) => {
         let gain = ep
         let newEnergy = this.energy_current + ep
-        if (!overrideLimits && (newEnergy > ENERGY_MAX)) {
-            gain = (ENERGY_MAX - this.energy_current)
-            this.energy_current = ENERGY_MAX;
+        if (!overrideLimits && (newEnergy > this.ENERGY_MAX)) {
+            gain = (this.ENERGY_MAX - this.energy_current)
+            this.energy_current = this.ENERGY_MAX;
         }
-        console.log(`${this.name} regains ${gain} energy.`)
+        // console.log(`${this.name} regains ${gain} energy.`)
         return gain
+     }
+
+     fullRestore = () => {
+        this.restoreHealth(this.HEALTH_MAX)
+        this.restoreEnergy(this.ENERGY_MAX)
+        console.log(`${this.name} fully recovers their health and energy.`)
      }
 
      gainItem = (...item) => { this.inventory.push(...item) };
@@ -294,6 +316,10 @@ class Character {
 
 class Adventurer extends Character {
     static ROLES = Object.keys(ROLE_SPECS)
+    
+    honor = 0
+    duel_victories = 0
+    duel_defeats = 0
 
     constructor (name, role) {
         super(name);
@@ -331,14 +357,60 @@ class Adventurer extends Character {
         this.roll();
     }
 
-    // TODO: create separate class of combat actions
-
     rest() {
         // Rest up in combat to regain energy
         let restored = this.restoreEnergy(this.energy_restore + this.luck)
     }
-};
 
+    duel(opponent) {
+        // TODO: implement duel abilities
+        // TODO: duel with different styles
+        // TODO: implement ties
+
+        // start at full health. the instructions don't indicate this, but fair's fair.
+        
+        console.group(`Duel: ${this.name} vs ${opponent.name}`)
+        console.log(`${this.name} has issued a challenge to ${opponent.name}! To the Arena!`)
+        
+        console.log(`Wait, while the combatants ready themselves...`)
+        let challengerRoll, opponentRoll, victor, defeated
+        let rounds = 0
+        opponent.fullRestore()
+        this.fullRestore()
+
+        console.group(`Parry and strike!`)
+        while ((this.health_current > 50) && (opponent.health_current > 50)) {
+            // TODO: cycle through stats?
+            // TODO: implement dueling skills
+            rounds++
+            challengerRoll = this.roll()
+            opponentRoll = opponent.roll()
+            console.log(`${challengerRoll} to ${opponentRoll}`)
+            if (challengerRoll > opponentRoll) {
+                opponent.health_current -= 1
+            } else if (challengerRoll < opponentRoll) {
+                this.health_current -= 1
+            }
+        }
+        console.groupEnd()
+        
+        if (this.health_current > opponent.health_current) {
+            victor = this
+            defeated = opponent
+        } else {
+            victor = opponent
+            defeated = this
+        }
+        console.log(`It's over! Glory shines upon both combatants, but after ${rounds} rounds, ${victor.name} claims victory!`)
+        victor.honor += 3
+        victor.gold += 25
+        victor.duel_victories += 1
+        defeated.honor += 1
+        defeated.gold += 10
+        defeated.duel_defeats += 1
+        console.groupEnd()
+    }
+};
 
 class Companion extends Character {
     companion_to
@@ -412,3 +484,18 @@ adventurer.scout()
 adventurer.scout()
 adventurer.scout()
 
+console.log(`Let's fight for fun!`)
+let fighter = new Adventurer("Fiona", "Fighter")
+let healer = new Adventurer("Helena", "Healer")
+let wizard = new Adventurer("Wanda", "Wizard")
+let cleric = new Adventurer("Cedric", "Cleric")
+
+wizard.duel(cleric)
+fighter.duel(healer)
+cleric.duel(fighter)
+healer.duel(wizard)
+
+console.log(`After four exhibition bouts:`)
+for (let combatant of [cleric, fighter, healer, wizard]) {
+    console.log(`  ${combatant.name} has scored ${combatant.duel_victories} victories!`)
+}
