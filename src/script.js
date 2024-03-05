@@ -461,7 +461,39 @@ class Companion extends Character {
         }
     }
 }
-  
+
+
+// Why do we need a factory? Are we building an army?
+class DungeonBootCamp {
+    constructor (role) {
+        this.role = role;
+        this.graduates = [];
+    }
+    train(name) {
+        const newAdventurer = new Adventurer(name, this.role);
+        this.graduates.push(newAdventurer);
+        console.log(`${this.name} has a new graduate! Welcome, ${name}!`)
+        return newAdventurer
+    }
+    findByIndex (index) {
+        return this.graduates[index];
+    }
+    findByName (name) {
+        return this.graduates.find((a) => a.name === name);
+    }
+}
+
+const fightClub = new DungeonBootCamp("Fighter")
+const collegeOfMagic = new DungeonBootCamp("Wizard")
+const clinicOfMercy = new DungeonBootCamp("Healer")
+const theOneTrueChurch = new DungeonBootCamp("Cleric")
+
+
+const fighter = fightClub.train("Fiona")
+const healer = clinicOfMercy.train("Helena")
+const wizard = collegeOfMagic.train("Wanda")
+const cleric = theOneTrueChurch.train("Cedric")
+
 
 const adventurer = new Adventurer(name="Robin", role="the Chosen One");
 adventurer.inventory = ["sword", "potion", "artifact"];
@@ -485,10 +517,6 @@ adventurer.scout()
 adventurer.scout()
 
 console.log(`\nLet's fight for fun!`)
-let fighter = new Adventurer("Fiona", "Fighter")
-let healer = new Adventurer("Helena", "Healer")
-let wizard = new Adventurer("Wanda", "Wizard")
-let cleric = new Adventurer("Cedric", "Cleric")
 
 wizard.duel(cleric)
 fighter.duel(healer)
